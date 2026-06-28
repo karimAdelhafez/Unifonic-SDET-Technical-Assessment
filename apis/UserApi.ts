@@ -1,7 +1,6 @@
 import { APIRequestContext } from "@playwright/test";
 import User from "../models/User";
 
-                               ////Check readme Note////
 export default class UserApi {
     private request: APIRequestContext;
 
