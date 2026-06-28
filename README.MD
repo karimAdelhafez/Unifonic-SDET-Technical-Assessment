@@ -16,7 +16,8 @@ The submission includes four parts: the automated test suite, an exploratory tes
 ├── apis/
 │   └── UserApi.ts                        # Handles API calls for user registration
 ├── docs/
-│   └── Exploratory-Analysis.md           # Manual test cases, risks, and priorities
+│   ├── AI_Usage.md                       # Summary of AI-assisted activities and how generated suggestions were reviewed and validated.
+│   ├── Exploratory_Analysis.md           # Risk assessment, exploratory charters, observations, and test ideas.
 ├── helpers/
 │   └── ProductHelper.ts                  # Shared action: search for a product and open it
 ├── models/
@@ -33,6 +34,7 @@ The submission includes four parts: the automated test suite, an exploratory tes
 │   ├── searchExistingProducts.spec.ts    # Searches for each product and checks the result title
 │   ├── checkProductDescription.spec.ts   # Opens a product and checks its description text
 │   └── selectDifferentCar.spec.ts        # Searches, opens a product, then switches the car model
+├── Code-Review                           # Ai-Assessment code review
 ├── playwright.config.ts                  # Test settings (base URL, browser, reporter)
 └── package.json
 ```
