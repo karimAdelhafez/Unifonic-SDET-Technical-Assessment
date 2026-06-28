@@ -18,7 +18,7 @@ test("select different car", async ({ page }) => {
 
   await productHelper.searchAndSelectProduct(product.model[0], product.name);
 
-  await expect(productPage.getItemDescription()).toBe(
+  await expect(await productPage.getItemDescription()).toBe(
     product.description,
   );
 
