@@ -2,7 +2,9 @@
 
 ## Overview
 
-The project focuses on demonstrating a practical automation approach for the [Skoda Parts](https://www.skoda-parts.com/) spare-parts catalogue, built with **Playwright** and **TypeScript**. The suite covers product search, product description validation, and car-model switching. A GitHub Actions workflow runs the tests on every push and pull request to `main`/`master`.
+This project contains automated end-to-end tests for the [Skoda Parts](https://www.skoda-parts.com/) spare-parts website. Tests are written in **Playwright** and **TypeScript** and run automatically on every push or pull request via GitHub Actions.
+
+The submission includes four parts: the automated test suite, an exploratory testing document, an AI-assisted assessment, and a code review.
 
 ---
 
@@ -10,58 +12,80 @@ The project focuses on demonstrating a practical automation approach for the [Sk
 
 ```
 .
-├── .github/workflows/playwright.yml   # CI pipeline (GitHub Actions)
+├── .github/workflows/playwright.yml      # Runs tests automatically on GitHub
 ├── apis/
-│   └── UserApi.ts                     # Playwright APIRequestContext wrapper for user registration
+│   └── UserApi.ts                        # Handles API calls for user registration
+├── docs/
+│   └── Exploratory-Analysis.md           # Manual test cases, risks, and priorities
 ├── helpers/
-│   └── ProductHelper.ts               # Reusable composite action: search + select a product
+│   └── ProductHelper.ts                  # Shared action: search for a product and open it
 ├── models/
-│   └── User.ts                        # User entity; uses @faker-js/faker for dynamic test data
+│   └── User.ts                           # Creates a test user with random data
 ├── pages/
-│   ├── BasePage.ts                    # Base class that holds the shared Playwright Page instance
-│   ├── HomePage.ts                    # Locators and actions for the search / home screen
-│   ├── ProductPage.ts                 # Locators and actions for the product detail page
-│   └── CarPage.ts                     # Locators and actions for the "change car" dropdown
+│   ├── BasePage.ts                       # Shared base that all page classes inherit from
+│   ├── HomePage.ts                       # Actions for the search and home screen
+│   ├── ProductPage.ts                    # Actions for the product detail page
+│   └── CarPage.ts                        # Actions for the "change car" dropdown
 ├── test-data/
-│   ├── products.ts                    # Static product fixtures (name, model, expected description)
-│   └── models.ts                      # Static car-model fixtures (model name, expected page title)
+│   ├── products.ts                       # Product test fixtures (name, model, expected description)
+│   └── models.ts                         # Car model fixtures (model name, expected page title)
 ├── tests/
-│   ├── searchExistingProducts.spec.ts # Parametrised search tests across all fixture products
-│   ├── checkProductDescription.spec.ts# Verifies product description on the detail page
-│   └── selectDifferentCar.spec.ts     # End-to-end: search → product page → switch car model
-├── playwright.config.ts               # Playwright configuration (baseURL, reporter, browser)
+│   ├── searchExistingProducts.spec.ts    # Searches for each product and checks the result title
+│   ├── checkProductDescription.spec.ts   # Opens a product and checks its description text
+│   └── selectDifferentCar.spec.ts        # Searches, opens a product, then switches the car model
+├── playwright.config.ts                  # Test settings (base URL, browser, reporter)
 └── package.json
 ```
 
 ---
 
-## Test Scenarios
+## Deliverables
 
-| Spec file | What it validates |
+**Automated Test Suite** — this repository. Three test files covering search, description validation, and car-model switching.
+
+**Exploratory Analysis** (`docs/Exploratory-Analysis.md`) — manual test cases, observed issues, risk areas, and test priorities found during a hands-on session with the application.
+
+**AI Assessment** — AI-assisted review covering additional risk areas, edge cases, and coverage gaps beyond what manual exploration surfaced.
+
+**Code Review** — a structured review of the framework covering design choices, maintainability, and suggestions for improvement.
+
+---
+
+## What the Tests Cover
+
+| Test file | What it checks |
 |---|---|
-| `searchExistingProducts.spec.ts` | For every product in `test-data/products.ts`, asserts the search-results page title matches the product name. Tests are generated dynamically via a `for…of` loop. |
-| `checkProductDescription.spec.ts` | Searches for a product, navigates to its detail page, and asserts the description text matches the fixture value. |
-| `selectDifferentCar.spec.ts` | Full flow: searches for a product, confirms the description, then uses the "change car" dropdown to switch models and asserts the resulting page title. |
+| `searchExistingProducts.spec.ts` | Searches for each product in the fixtures and confirms the results page title is correct. One test is created per product automatically. |
+| `checkProductDescription.spec.ts` | Searches for a product, opens it, and checks that the description matches the expected text. |
+| `selectDifferentCar.spec.ts` | Full flow: searches for a product, checks the description, then switches to a different car model and confirms the page title changes. |
 
 ---
 
 ## Design Decisions
 
-**Page Object Model (POM).** Each page in the application has a dedicated class under `pages/`. Locators are private getters; only high-level action methods are exposed to tests. This prevents locator duplication and makes selector updates a single-file change.
+**Page Object Model.** Each page has its own class under `pages/`. Locators are kept private inside the class; tests only call action methods. This means if a selector changes, it is fixed in one place.
 
-**`BasePage` inheritance.** All page objects extend `BasePage`, which injects the Playwright `Page` instance through the constructor. This avoids passing `page` into every method call and keeps page classes concise.
+**Shared base class.** All page classes extend `BasePage`, which holds the Playwright `page` instance. This removes the need to pass `page` around manually in every class.
 
-**Helper layer for composite actions.** `ProductHelper` encapsulates the "search and select" multi-step action that is reused across multiple test files. Composite actions that span more than one page object belong in `helpers/`, not in the test itself, keeping specs readable.
+**Helper for repeated steps.** The "search for a product and open it" sequence is used in more than one test, so it lives in `ProductHelper` rather than being copied into each spec file.
 
-**Static test data in TypeScript files.** `test-data/products.ts` and `test-data/models.ts` export typed constants rather than JSON or CSV files. This gives compile-time checking on fixture shape and enables the `for…of` dynamic test generation in `searchExistingProducts.spec.ts` without a CSV parser or external dependency.
+**Data-driven testing where it makes sense.** The search test generates one test case per product automatically, because all products go through the same steps. The other two tests stay as single cases because their flows are different enough that looping would not add value.
 
-**`User` model with Faker.** The `User` class generates realistic but unique data on construction via `@faker-js/faker`. This design isolates data generation from test logic and is ready to support API-level setup (see `UserApi.ts`) without test files needing to know how users are created.
+**Test data as typed TypeScript.** Fixtures live in `.ts` files instead of JSON or CSV. This catches typos at compile time and works directly with the test loop without any parsing.
 
-**`UserApi` class.** Wraps Playwright's `APIRequestContext` for the user-registration endpoint. Placing API calls in a dedicated class separates transport concerns from test intent and makes the API layer reusable across multiple specs that may need a pre-registered user.
+**Faker for user data.** The `User` class generates a random name, email, and password on creation. This keeps test data realistic and avoids hardcoded values that could conflict across runs.
 
-**HTML reporter + CI artefact.** `playwright.config.ts` uses the `html` reporter. The GitHub Actions workflow uploads the generated `playwright-report/` directory as a 30-day artefact, so test results are inspectable after every run without local reproduction.
+**`UserApi` for registration.** API calls for user creation are wrapped in their own class, separate from the tests. This makes the API layer reusable and keeps test files focused on behaviour, not HTTP details.
 
-**CI environment guards.** `forbidOnly: !!process.env.CI` prevents accidentally committed `test.only` calls from silently narrowing CI coverage. Retries are set to 2 on CI and 0 locally, balancing flakiness tolerance against fast local feedback.
+**HTML report saved in CI.** After every run, the HTML report is uploaded as a GitHub Actions artefact and kept for 30 days. Anyone can download and review results without re-running the tests locally.
+
+**CI safety settings.** `forbidOnly` prevents a `test.only` from accidentally limiting what runs in CI. Retries are set to 2 in CI and 0 locally so failures are investigated quickly during development but have a chance to recover from flakiness in the pipeline.
+
+---
+
+## What Was Left Out and Why
+
+**Registration and login flows are not automated.** During the exploratory session, it was clear that the production site uses bot detection and CAPTCHA. Automating these flows on production would be unreliable and would interfere with the site's security measures. The `User` model and `UserApi` class are already in place so these tests can be added once a test environment without CAPTCHA is available.
 
 ---
 
@@ -71,17 +95,17 @@ The project focuses on demonstrating a practical automation approach for the [Sk
 # Install dependencies
 npm ci
 
-# Install Playwright browsers
+# Install browsers
 npx playwright install --with-deps
 
-# Run all tests (headed)
+# Run all tests
 npx playwright test
 
-# Open last HTML report
+# View the last report
 npx playwright show-report
 ```
 
-> **Note:** The `UserApi` registration endpoint URL is intentionally left blank pending the target environment. See the comment in `apis/UserApi.ts`.
+> The `UserApi` registration URL is left blank intentionally — it will be filled in once a test environment is confirmed. See `apis/UserApi.ts`.
 
 ---
 
@@ -89,9 +113,9 @@ npx playwright show-report
 
 | Tool | Version | Purpose |
 |---|---|---|
-| Playwright | ^1.61 | Browser automation & test runner |
-| TypeScript | ^5.7 | Type safety across all layers |
-| @faker-js/faker | ^9.0 | Dynamic user data generation |
-| dotenv | ^16.4 | Environment variable loading (wired, not yet activated) |
+| Playwright | ^1.61 | Browser automation and test runner |
+| TypeScript | ^5.7 | Type safety across all files |
+| @faker-js/faker | ^9.0 | Random test data generation |
+| dotenv | ^16.4 | Environment variable support (set up, not yet active) |
 | Prettier | ^3.8 | Code formatting |
-| GitHub Actions | — | CI / CD pipeline |
+| GitHub Actions | — | CI pipeline |
