@@ -16,6 +16,7 @@ The submission includes four parts: the automated test suite, an exploratory tes
 ├── apis/
 │   └── UserApi.ts                        # Handles API calls for user registration
 ├── docs/
+│   └── screenshots/                      # Evidence captured during exploratory testing
 │   ├── AI_Usage.md                       # Summary of AI-assisted activities and how generated suggestions were reviewed and validated.
 │   ├── Exploratory_Analysis.md           # Risk assessment, exploratory charters, observations, and test ideas.
 ├── helpers/
